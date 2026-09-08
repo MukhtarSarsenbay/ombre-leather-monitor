@@ -1,0 +1,40 @@
+name: Test alternate storefront network
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Start official free WARP local proxy
+        run: bash scripts/start_warp_proxy.sh
+      - name: Read the public Mon Amie offer through the proxy
+        env:
+          HTTPS_PROXY: http://127.0.0.1:40000
+        run: |
+          python - <<'PY'
+          import asyncio
+          from app.config import Settings
+          from app.scraper import read_monamie_api
+          result = asyncio.run(read_monamie_api(Settings(_env_file=None)))
+          print(result.model_dump_json(indent=2))
+          PY
+      - name: Remove ephemeral WARP registration
+        if: always()
+        run: |
+          if command -v warp-cli >/dev/null; then
+            warp-cli --accept-tos disconnect || true
+            warp-cli --accept-tos registration delete || true
+          fi
