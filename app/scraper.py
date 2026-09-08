@@ -157,14 +157,17 @@ async def read_monamie_quote(settings: Settings) -> Quote:
                 ignore_default_args=["--enable-automation"],
             )
             try:
+                stage = "opening browser page"
                 page = await browser.new_page(
                     locale="ru-RU", timezone_id="Asia/Almaty",
                     viewport={"width": 1440, "height": 1000},
                 )
                 page.set_default_timeout(settings.browser_timeout_ms)
+                stage = "loading product URL"
                 await page.goto(settings.monamie_url, wait_until="domcontentloaded")
                 # The security page also has an h1. Wait for the actual product
                 # instead, allowing automatic browser verification to finish.
+                stage = "waiting for product after security check"
                 await page.locator("h1.product-detail__head-title").wait_for(state="visible")
                 await page.locator('.js-product-detail__price-now').wait_for(state="visible")
                 await asyncio.sleep(2)
@@ -173,7 +176,16 @@ async def read_monamie_quote(settings: Settings) -> Quote:
                     expected.scheme, expected.netloc, expected.path.rstrip("/")
                 ):
                     raise PriceReadError("Mon Amie: redirected away from the product")
+                stage = "reading product fields"
                 return await extract_monamie_quote(page, settings)
+            except BrowserError as exc:
+                try:
+                    title = (await page.title())[:120]
+                except (BrowserError, UnboundLocalError):
+                    title = "unavailable"
+                raise PriceReadError(
+                    f"Mon Amie: {type(exc).__name__} while {stage}; page title: {title}"
+                ) from None
             finally:
                 await browser.close()
         except BrowserError:

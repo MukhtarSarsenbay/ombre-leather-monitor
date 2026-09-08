@@ -1,0 +1,37 @@
+name: Diagnose storefront browser access
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Install Linux browser libraries
+        if: runner.os == 'Linux'
+        run: |
+          python -m playwright install-deps chromium
+          sudo apt-get install -y xvfb xauth
+      - name: Test installed Google Chrome
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            xvfb-run -a python scripts/diagnose_storefront.py
+          else
+            python scripts/diagnose_storefront.py
+          fi

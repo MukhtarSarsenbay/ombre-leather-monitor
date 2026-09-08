@@ -16,9 +16,10 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   was needed. Headless mode remained challenged. The reader cross-checks the
   selected size's `data-info.price` with the visible current price. JSON-LD is
   deliberately ignored because it reports the old **93,500 ₸** base price.
-- Nothing has been deployed or scheduled remotely, and no messages have been sent.
-  Bot/email credentials and a hosting choice are still needed. Browser access must
-  also be tested on the selected host: local success does not establish cloud access.
+- Source and workflow are deployed to the public repository
+  [MukhtarSarsenbay/ombre-leather-monitor](https://github.com/MukhtarSarsenbay/ombre-leather-monitor).
+  Notification delivery is gated by the `NOTIFICATIONS_ENABLED` repository variable;
+  a deployment is not notification-ready until secrets and a delivery test succeed.
 
 ## Behavior
 
@@ -51,7 +52,8 @@ instead of downloading Chromium.
 Mon Amie defaults to `MONAMIE_HEADLESS=false`. On a desktop, a temporary browser
 window opens and closes automatically. On Linux without a desktop, install
 `xvfb` and `xauth` and prefix the command with `xvfb-run -a`. The GitHub workflow
-and Docker web-service command already provide this virtual display.
+and Docker web-service command provide this virtual display on Linux. The hosted
+GitHub price check uses a standard macOS runner with its normal desktop session.
 
 Read live prices without sending anything:
 
@@ -88,7 +90,8 @@ The selected host must allow outbound SMTP.
 The supplied `.github/workflows/price-check.yml` runs the same monitor twice daily.
 Your laptop can be off. There is no always-online FastAPI URL in this option.
 
-1. Put this project in a **private GitHub repository** on its default branch.
+1. Put this project in a **public GitHub repository** on its default branch for
+   free standard hosted runners. The current deployment uses a public repository.
 2. In **Settings → Secrets and variables → Actions**, add `TELEGRAM_BOT_TOKEN`
    and `TELEGRAM_CHAT_ID` as repository secrets.
 3. For email instead, set repository variable `NOTIFICATION_CHANNEL=email` and
@@ -97,16 +100,21 @@ Your laptop can be off. There is no always-online FastAPI URL in this option.
    and confirm both stores succeed from GitHub's network before relying on alerts.
 5. Set repository variable `NOTIFICATIONS_ENABLED=true` once the secrets are ready,
    then run again with `dry_run` unchecked to test the enabled notification path.
+   Select `test_notification` to send a clearly labelled delivery test from GitHub.
    Until this variable is enabled, all runs read prices without sending messages.
    After it is enabled, scheduled runs send applicable notifications.
 
-GitHub Free includes 2,000 monthly minutes for private repositories; this workload
-should fit if the account has sufficient remaining allowance. Actual duration must
-be measured. [Billing documentation](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+Standard GitHub-hosted runners are free for public repositories, including the
+macOS runner used here. Credentials are encrypted repository secrets, not source
+files. If you make the repository private, GitHub Free instead includes 2,000
+shared monthly minutes, and usage above the allowance can be billed.
+[Billing documentation](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
 
 Scheduled jobs may be delayed or dropped under heavy load. In public repositories,
-schedules are disabled after 60 days without repository activity. This is a price
-watch, not an exact-time guarantee. [Scheduling documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+schedules are disabled after 60 days without repository activity. A separate
+scheduled job commits `.github/monitor-heartbeat` once per month to maintain
+activity; only that job has repository write permission. This is a price watch,
+not an exact-time guarantee. [Scheduling documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
 
 ### Railway: if you want FastAPI online
 
