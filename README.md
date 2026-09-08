@@ -17,11 +17,16 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   personal profile. A browser fallback cross-checks the selected size against the
   visible current price. JSON-LD is deliberately ignored because it reports the
   old **93,500 ₸** base price. Browser checks succeeded locally but failed from
-  GitHub's networks, which is why the offer endpoint is preferred.
+  GitHub's networks. **Cloud deployment limitation:** both the browser and API
+  paths were blocked in tests on GitHub's Linux, macOS and Windows runners.
+  Mon Amie is not currently a working cloud monitor; its failures remain visible
+  in reports and do not prevent Gold Apple price alerts.
 - Source and workflow are deployed to the public repository
   [MukhtarSarsenbay/ombre-leather-monitor](https://github.com/MukhtarSarsenbay/ombre-leather-monitor).
   Notification delivery is gated by the `NOTIFICATIONS_ENABLED` repository variable;
   a deployment is not notification-ready until secrets and a delivery test succeed.
+  Gold Apple has been verified from GitHub at 84,150 ₸. The bot token is stored
+  as an encrypted secret, but its private chat ID and delivery test are pending.
 
 ## Behavior
 
