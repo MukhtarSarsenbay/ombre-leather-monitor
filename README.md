@@ -26,7 +26,8 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   Notification delivery is gated by the `NOTIFICATIONS_ENABLED` repository variable;
   a deployment is not notification-ready until secrets and a delivery test succeed.
   Gold Apple has been verified from GitHub at 84,150 ₸. The bot token is stored
-  as an encrypted secret, but its private chat ID and delivery test are pending.
+  with its private chat ID as encrypted secrets. Telegram delivery from GitHub
+  succeeded on 2026-09-08 and `NOTIFICATIONS_ENABLED=true` is configured.
 
 ## Behavior
 

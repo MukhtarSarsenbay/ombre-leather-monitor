@@ -18,19 +18,12 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r requirements.txt
+      - run: python -m playwright install --with-deps chromium
+      - run: sudo apt-get install -y xvfb xauth
       - name: Start official free WARP local proxy
         run: bash scripts/start_warp_proxy.sh
       - name: Read the public Mon Amie offer through the proxy
-        env:
-          HTTPS_PROXY: http://127.0.0.1:40000
-        run: |
-          python - <<'PY'
-          import asyncio
-          from app.config import Settings
-          from app.scraper import read_monamie_api
-          result = asyncio.run(read_monamie_api(Settings(_env_file=None)))
-          print(result.model_dump_json(indent=2))
-          PY
+        run: xvfb-run -a python scripts/diagnose_proxy_browser.py
       - name: Remove ephemeral WARP registration
         if: always()
         run: |
