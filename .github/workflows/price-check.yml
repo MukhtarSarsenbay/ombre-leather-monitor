@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
       NOTIFICATIONS_ENABLED: ${{ vars.NOTIFICATIONS_ENABLED || 'false' }}
@@ -44,6 +44,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y xvfb xauth
       - name: Verify notification delivery
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_notification }}
         run: |
@@ -61,9 +62,9 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: |
           if [ "$DRY_RUN" = "true" ] || [ "$NOTIFICATIONS_ENABLED" != "true" ]; then
-            python -m app.check --dry-run
+            xvfb-run -a python -m app.check --dry-run
           else
-            python -m app.check
+            xvfb-run -a python -m app.check
           fi
 
   keep-schedule-active:

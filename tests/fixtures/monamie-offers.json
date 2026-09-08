@@ -1,0 +1,72 @@
+{
+  "status": "success",
+  "data": {
+    "isDifferentOffer": false,
+    "isCapacityOffer": true,
+    "offers": {
+      "size": {
+        "73559": {
+          "priceFormatted": "74 800 тг.",
+          "capacity": {
+            "ID": "62915",
+            "~ID": "62915",
+            "IBLOCK_ID": "12",
+            "~IBLOCK_ID": "12",
+            "DETAIL_PAGE_URL": "/info/detail.php?ID=62915",
+            "~DETAIL_PAGE_URL": "/info/detail.php?ID=62915",
+            "NAME": "50",
+            "~NAME": "50",
+            "LANG_DIR": "/",
+            "~LANG_DIR": "/",
+            "CODE": "50-1",
+            "~CODE": "50-1",
+            "EXTERNAL_ID": "62915",
+            "~EXTERNAL_ID": "62915",
+            "IBLOCK_SECTION_ID": null,
+            "~IBLOCK_SECTION_ID": null,
+            "IBLOCK_TYPE_ID": "info",
+            "~IBLOCK_TYPE_ID": "info",
+            "IBLOCK_CODE": "capacities",
+            "~IBLOCK_CODE": "capacities",
+            "IBLOCK_EXTERNAL_ID": "12",
+            "~IBLOCK_EXTERNAL_ID": "12",
+            "LID": "s1",
+            "~LID": "s1"
+          },
+          "available": true
+        },
+        "73560": {
+          "priceFormatted": "104 880 тг.",
+          "capacity": {
+            "ID": "62913",
+            "~ID": "62913",
+            "IBLOCK_ID": "12",
+            "~IBLOCK_ID": "12",
+            "DETAIL_PAGE_URL": "/info/detail.php?ID=62913",
+            "~DETAIL_PAGE_URL": "/info/detail.php?ID=62913",
+            "NAME": "100",
+            "~NAME": "100",
+            "LANG_DIR": "/",
+            "~LANG_DIR": "/",
+            "CODE": "100-1",
+            "~CODE": "100-1",
+            "EXTERNAL_ID": "62913",
+            "~EXTERNAL_ID": "62913",
+            "IBLOCK_SECTION_ID": null,
+            "~IBLOCK_SECTION_ID": null,
+            "IBLOCK_TYPE_ID": "info",
+            "~IBLOCK_TYPE_ID": "info",
+            "IBLOCK_CODE": "capacities",
+            "~IBLOCK_CODE": "capacities",
+            "IBLOCK_EXTERNAL_ID": "12",
+            "~IBLOCK_EXTERNAL_ID": "12",
+            "LID": "s1",
+            "~LID": "s1"
+          },
+          "available": true
+        }
+      }
+    }
+  },
+  "errors": []
+}

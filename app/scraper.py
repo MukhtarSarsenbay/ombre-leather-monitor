@@ -5,6 +5,7 @@ import unicodedata
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
+import httpx
 from playwright.async_api import Error as BrowserError, async_playwright
 from pydantic import BaseModel
 
@@ -147,7 +148,79 @@ async def extract_monamie_quote(page, settings: Settings) -> Quote:
                                settings.monamie_url)
 
 
+def parse_monamie_api(payload: dict, settings: Settings) -> Quote:
+    """Read the verified product's exact SKU from its public storefront endpoint."""
+    # SKU identities were verified against the product's visible size controls.
+    expected_sku = {50: "73559", 100: "73560"}.get(settings.expected_volume_ml)
+    if not expected_sku:
+        raise PriceReadError("Mon Amie: no verified SKU for the configured bottle size")
+    try:
+        data = payload["data"]
+        offers = data["offers"]["size"]
+        offer = offers[expected_sku]
+        capacity = offer["capacity"]["NAME"]
+        formatted = " ".join(unicodedata.normalize("NFKC", offer["priceFormatted"]).split())
+        matched = re.fullmatch(r"(\d{1,3}(?: \d{3})+|\d+) (?:тг\.|₸)", formatted)
+        if (payload["status"] != "success" or data["isCapacityOffer"] is not True
+                or str(capacity) != str(settings.expected_volume_ml) or matched is None):
+            raise ValueError
+        price = int(matched[1].replace(" ", ""))
+        if price <= 0:
+            raise ValueError
+    except (KeyError, TypeError, ValueError):
+        raise PriceReadError("Mon Amie: storefront API returned an invalid SKU, size or KZT price") from None
+    return Quote(store="Mon Amie", product=f"TOM FORD Ombré Leather {capacity} мл",
+                 volume_ml=settings.expected_volume_ml, price_kzt=price,
+                 price_type="цена на сайте", url=settings.monamie_url,
+                 checked_at=datetime.now(timezone.utc))
+
+
+async def read_monamie_api(settings: Settings) -> Quote:
+    parsed = urlsplit(settings.monamie_url)
+    if parsed.netloc != "www.monamie.kz" or not parsed.path.rstrip("/").endswith(
+        "/tom_ford_ombr_leather_parfyumirovannaya_voda_id74160"
+    ):
+        raise PriceReadError("Mon Amie: URL does not match the verified product")
+    url = "https://www.monamie.kz/bitrix/services/main/ajax.php"
+    params = {"mode": "class", "c": "itconstruct:product.list.offers", "action": "getOffersData"}
+    data = {"productId": "74160"}
+    try:
+        async with httpx.AsyncClient(timeout=25) as client:
+            for attempt in range(2):
+                response = await client.post(url, params=params, data=data)
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    raise ValueError
+                if payload.get("status") == "success":
+                    return parse_monamie_api(payload, settings)
+                # The public API supplies an anonymous CSRF token on first use.
+                # Reuse that session's cookies and token, as the storefront does.
+                errors = payload.get("errors")
+                if attempt or not isinstance(errors, list):
+                    break
+                csrf = next((e.get("customData", {}).get("csrf") for e in errors
+                             if isinstance(e, dict) and e.get("code") == "invalid_csrf"
+                             and isinstance(e.get("customData"), dict)), None)
+                if not isinstance(csrf, str) or not re.fullmatch(r"[a-fA-F0-9]{32}", csrf):
+                    break
+                data["sessid"] = csrf
+    except (httpx.HTTPError, ValueError):
+        raise PriceReadError("Mon Amie: public storefront API is unavailable") from None
+    raise PriceReadError("Mon Amie: public storefront session could not be established")
+
+
 async def read_monamie_quote(settings: Settings) -> Quote:
+    try:
+        return await read_monamie_api(settings)
+    except PriceReadError as api_error:
+        try:
+            return await read_monamie_browser(settings)
+        except PriceReadError as browser_error:
+            raise PriceReadError(f"{api_error}; {browser_error}") from None
+
+
+async def read_monamie_browser(settings: Settings) -> Quote:
     async with async_playwright() as p:
         try:
             browser = await p.chromium.launch(
