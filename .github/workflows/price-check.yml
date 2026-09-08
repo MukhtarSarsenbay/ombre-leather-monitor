@@ -10,6 +10,10 @@ on:
         description: Read prices without sending notifications
         type: boolean
         default: true
+      test_notification:
+        description: Send a Telegram/email delivery test from GitHub
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,7 +24,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 12
     env:
       NOTIFICATIONS_ENABLED: ${{ vars.NOTIFICATIONS_ENABLED || 'false' }}
@@ -40,13 +44,47 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -m playwright install --with-deps chromium
-      - run: sudo apt-get update && sudo apt-get install -y xvfb xauth
+      - name: Verify notification delivery
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_notification }}
+        run: |
+          python - <<'PY'
+          import asyncio
+          from app.config import Settings
+          from app.notify import send_notification
+          asyncio.run(send_notification(Settings(),
+              "Тест доставки из GitHub Actions: уведомления Ombré Leather работают.\n"
+              "Проверки: 09:00 и 19:00 (Алматы). Порог: строго ниже 71 000 ₸, 50 мл.\n"
+              "Это тест связи, а не сообщение о снижении цены."))
+          PY
       - name: Check prices
         env:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
         run: |
           if [ "$DRY_RUN" = "true" ] || [ "$NOTIFICATIONS_ENABLED" != "true" ]; then
-            xvfb-run -a python -m app.check --dry-run
+            python -m app.check --dry-run
           else
-            xvfb-run -a python -m app.check
+            python -m app.check
           fi
+
+  keep-schedule-active:
+    if: ${{ github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record activity once a month
+        # Public scheduled workflows otherwise stop after 60 days of inactivity.
+        run: |
+          month=$(date -u +%Y-%m)
+          previous=$(cat .github/monitor-heartbeat 2>/dev/null || true)
+          if [ "$month" = "$previous" ]; then
+            exit 0
+          fi
+          printf '%s\n' "$month" > .github/monitor-heartbeat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/monitor-heartbeat
+          git commit -m "Keep price-check schedule active ($month)"
+          git push
