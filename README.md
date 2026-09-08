@@ -11,11 +11,13 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   The reader checks the selected bottle size, product heading, URL and explicitly
   labelled maximum-card price. It does not use a recommendation or generic price.
 - Mon Amie: successfully read **74,800 ₸ for 50 ml** on 2026-09-08 with both
-  regular Chrome and Playwright's bundled browser. The site completed its browser
-  check automatically in headed mode; no manual CAPTCHA or saved personal profile
-  was needed. Headless mode remained challenged. The reader cross-checks the
-  selected size's `data-info.price` with the visible current price. JSON-LD is
-  deliberately ignored because it reports the old **93,500 ₸** base price.
+  its public storefront offer endpoint and a local browser. The preferred reader
+  uses the storefront's anonymous session handshake and verifies product 74160,
+  the exact 50 ml SKU 73559, and its KZT price. It requires no store login or saved
+  personal profile. A browser fallback cross-checks the selected size against the
+  visible current price. JSON-LD is deliberately ignored because it reports the
+  old **93,500 ₸** base price. Browser checks succeeded locally but failed from
+  GitHub's networks, which is why the offer endpoint is preferred.
 - Source and workflow are deployed to the public repository
   [MukhtarSarsenbay/ombre-leather-monitor](https://github.com/MukhtarSarsenbay/ombre-leather-monitor).
   Notification delivery is gated by the `NOTIFICATIONS_ENABLED` repository variable;
@@ -49,11 +51,12 @@ On Linux use `python -m playwright install --with-deps chromium` to install syst
 dependencies too. On macOS with Chrome installed, set `BROWSER_CHANNEL=chrome`
 instead of downloading Chromium.
 
-Mon Amie defaults to `MONAMIE_HEADLESS=false`. On a desktop, a temporary browser
-window opens and closes automatically. On Linux without a desktop, install
+Mon Amie's browser fallback defaults to `MONAMIE_HEADLESS=false`. On a desktop,
+a temporary browser window opens and closes automatically if the API fails.
+On Linux without a desktop, install
 `xvfb` and `xauth` and prefix the command with `xvfb-run -a`. The GitHub workflow
 and Docker web-service command provide this virtual display on Linux. The hosted
-GitHub price check uses a standard macOS runner with its normal desktop session.
+GitHub price check uses a standard Ubuntu runner.
 
 Read live prices without sending anything:
 
@@ -105,7 +108,7 @@ Your laptop can be off. There is no always-online FastAPI URL in this option.
    After it is enabled, scheduled runs send applicable notifications.
 
 Standard GitHub-hosted runners are free for public repositories, including the
-macOS runner used here. Credentials are encrypted repository secrets, not source
+Ubuntu runner used here. Credentials are encrypted repository secrets, not source
 files. If you make the repository private, GitHub Free instead includes 2,000
 shared monthly minutes, and usage above the allowance can be billed.
 [Billing documentation](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
@@ -174,7 +177,8 @@ python -m pytest -q
 Tests cover the threshold boundary, card-price parsing, wrong size/product,
 Mon Amie's discount/base-price distinction and inconsistent prices, dry runs,
 per-store failure isolation, delivery failure, API authentication and secret
-redaction. Notifications in tests are mocked.
+redaction. The API tests verify exact SKU selection and the anonymous session
+cookie/CSRF handshake. Notifications in tests are mocked.
 
 After installing Playwright Chromium, run the captured-page regression test with:
 
