@@ -49,17 +49,29 @@ only Gold Apple. No Mac scheduler was installed.
 
 ## Check the price on demand
 
-Telegram messages include a **🔎 Check now** button. It opens the dedicated
-[Check price now workflow](https://github.com/MukhtarSarsenbay/ombre-leather-monitor/actions/workflows/check-now.yml).
-Sign in as the repository owner and choose **Run workflow → Run workflow**.
-GitHub starts a fresh Gold Apple check and sends the current price to Telegram,
-including prices at or above 71,000 ₸. Startup and browser installation take time;
-this is not an instant response. No Mac process or additional hosting account
-is needed, and no credentials are included in the button URL.
+Send **`/check`** to [the bot](https://t.me/ombre_leather_bot), or tap its native
+**/check** keyboard/menu button. The fresh Gold Apple price comes back in the same
+Telegram chat, including prices at or above 71,000 ₸. No GitHub page is involved.
 
-This is a link button, not a Telegram callback: GitHub Actions cannot receive
-Telegram webhooks itself. A one-tap Telegram callback would need a separately
-hosted listener. The morning/evening schedule still alerts only below 71,000 ₸.
+The free `telegram-commands.yml` workflow polls Telegram every five minutes,
+at minutes 2, 7, 12, etc. It installs a browser and reads Gold Apple only when
+an authorized request is pending. Allow the polling interval plus startup time;
+GitHub may delay or drop scheduled runs, so this is **not an instant-response
+service**. The twice-daily alert schedule is unchanged. Your Mac can be off.
+
+Only messages from the configured private chat and its owner are accepted.
+Multiple `/check` messages in one batch produce one price report. Requests are
+confirmed with Telegram only after a price reply or scrape-error notice is sent;
+failed delivery leaves them available for retry. A crash after delivery but
+before confirmation can produce a duplicate reply. Telegram retains pending
+updates for up to 24 hours. No raw messages or credentials are saved in job state.
+[Telegram update documentation](https://core.telegram.org/bots/api#getupdates).
+
+Run `python -m app.telegram_commands configure` once to register the command menu
+and send the keyboard. It refuses to replace an existing webhook. Do not run a
+second update poller for the same bot. The old manual GitHub workflow remains
+available for administration, but bot messages no longer link to it.
+
 The CLI equivalent is `python -m app.check --store goldapple --notify-current`;
 adding `--dry-run` suppresses all notifications.
 
