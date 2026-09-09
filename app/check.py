@@ -12,6 +12,8 @@ from app.scraper import PriceReadError
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Read live price without sending anything")
+    parser.add_argument("--notify-current", action="store_true",
+                        help="Send the current price even when it is above the alert threshold")
     parser.add_argument("--store", choices=("all", "goldapple", "monamie"),
                         help="Check a single store, or both (default: CHECK_STORE/goldapple)")
     args = parser.parse_args()
@@ -19,7 +21,8 @@ def main() -> int:
         settings = Settings()
         if args.store:
             settings.check_store = args.store
-        result = asyncio.run(Monitor(settings).check(dry_run=args.dry_run))
+        result = asyncio.run(Monitor(settings).check(
+            dry_run=args.dry_run, notify_current=args.notify_current))
     except (PriceReadError, NotificationError) as exc:
         print(f"Check failed: {exc}", file=sys.stderr)
         return 1

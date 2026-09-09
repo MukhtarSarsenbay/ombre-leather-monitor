@@ -117,6 +117,32 @@ def test_split_schedule_checks_and_alerts_only_selected_store(monkeypatch, selec
     send.assert_awaited_once()
 
 
+@pytest.mark.parametrize("price", [70999, 71000, 84150])
+def test_requested_check_always_reports_real_price_once(monkeypatch, price):
+    monkeypatch.setattr("app.monitor.read_quote", AsyncMock(return_value=quote(price)))
+    send = AsyncMock()
+    monkeypatch.setattr("app.monitor.send_notification", send)
+    result = asyncio.run(Monitor(settings(check_store="goldapple", telegram_bot_token="test",
+                                         telegram_chat_id="123")).check(notify_current=True))
+    assert result.ok and result.results[0].notified
+    assert result.results[0].below_threshold is (price < 71000)
+    send.assert_awaited_once()
+    message = send.await_args.args[1]
+    assert "Проверка по вашему запросу" in message
+    assert f"{price:,}".replace(",", " ") in message
+    assert ("Цена пока не ниже" in message) is (price >= 71000)
+
+
+def test_requested_check_dry_run_never_sends(monkeypatch):
+    monkeypatch.setattr("app.monitor.read_quote", AsyncMock(return_value=quote(69000)))
+    send = AsyncMock()
+    monkeypatch.setattr("app.monitor.send_notification", send)
+    result = asyncio.run(Monitor(settings(check_store="goldapple")).check(
+        dry_run=True, notify_current=True))
+    assert result.ok and not result.results[0].notified
+    send.assert_not_awaited()
+
+
 def test_store_failure_does_not_prevent_other_store_alert(monkeypatch):
     monkeypatch.setattr("app.monitor.read_quote", AsyncMock(side_effect=PriceReadError("blocked")))
     monkeypatch.setattr("app.monitor.read_monamie_quote", AsyncMock(return_value=quote(69000, "Mon Amie")))

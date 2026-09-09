@@ -27,13 +27,17 @@ class CheckReport(BaseModel):
         return not self.errors
 
 
-def alert_text(quote: Quote, threshold: int) -> str:
+def alert_text(quote: Quote, threshold: int, requested: bool = False) -> str:
     money = lambda n: f"{n:,}".replace(",", " ")
     checked = quote.checked_at.astimezone(ZoneInfo("Asia/Almaty"))
+    comparison = (f"Ниже вашего порога {money(threshold)} ₸."
+                  if quote.price_kzt < threshold
+                  else f"Цена пока не ниже вашего порога {money(threshold)} ₸.")
     return (
-        f"{quote.store}: {quote.product}\n"
+        ("Проверка по вашему запросу.\n" if requested else "")
+        + f"{quote.store}: {quote.product}\n"
         f"{money(quote.price_kzt)} ₸ — {quote.price_type}\n"
-        f"Ниже вашего порога {money(threshold)} ₸.\n"
+        f"{comparison}\n"
         f"Проверено: {checked:%d.%m.%Y %H:%M} (Алматы)\n"
         f"Наличие и итоговую цену проверьте на сайте.\n{quote.url}"
     )
@@ -47,7 +51,7 @@ class Monitor:
         self.last_error: str | None = None
         self.last_attempt_at: datetime | None = None
 
-    async def check(self, dry_run: bool = False) -> CheckReport:
+    async def check(self, dry_run: bool = False, notify_current: bool = False) -> CheckReport:
         async with self.lock:
             self.last_attempt_at = datetime.now(timezone.utc)
             if not dry_run:
@@ -71,8 +75,9 @@ class Monitor:
                     result = CheckResult(quote=quote, threshold_kzt=self.settings.threshold_kzt,
                                          below_threshold=below, notified=False, dry_run=dry_run)
                     results.append(result)
-                    if below and not dry_run:
-                        await send_notification(self.settings, alert_text(quote, self.settings.threshold_kzt))
+                    if (below or notify_current) and not dry_run:
+                        await send_notification(self.settings, alert_text(
+                            quote, self.settings.threshold_kzt, requested=notify_current))
                         result.notified = True
                 except (PriceReadError, NotificationError) as exc:
                     errors[store] = str(exc)

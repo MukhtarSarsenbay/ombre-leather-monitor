@@ -8,6 +8,9 @@ import httpx
 from app.config import Settings
 
 
+CHECK_NOW_URL = "https://github.com/MukhtarSarsenbay/ombre-leather-monitor/actions/workflows/check-now.yml"
+
+
 class NotificationError(RuntimeError):
     pass
 
@@ -40,7 +43,10 @@ async def send_notification(settings: Settings, text: str) -> None:
             response = await client.post(
                 f"https://api.telegram.org/bot{token}/sendMessage",
                 json={"chat_id": settings.telegram_chat_id, "text": text,
-                      "link_preview_options": {"is_disabled": True}},
+                      "link_preview_options": {"is_disabled": True},
+                      "reply_markup": {"inline_keyboard": [[
+                          {"text": "🔎 Check now", "url": CHECK_NOW_URL}
+                      ]]}},
             )
             if response.status_code != 200 or response.json().get("ok") is not True:
                 raise NotificationError("Telegram rejected the notification")

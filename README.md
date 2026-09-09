@@ -47,6 +47,22 @@ only Gold Apple. No Mac scheduler was installed.
   Availability is not established by this monitor; verify stock and checkout price
   on the store page. No card login, coupon assumptions or purchases are involved.
 
+## Check the price on demand
+
+Telegram messages include a **🔎 Check now** button. It opens the dedicated
+[Check price now workflow](https://github.com/MukhtarSarsenbay/ombre-leather-monitor/actions/workflows/check-now.yml).
+Sign in as the repository owner and choose **Run workflow → Run workflow**.
+GitHub starts a fresh Gold Apple check and sends the current price to Telegram,
+including prices at or above 71,000 ₸. Startup and browser installation take time;
+this is not an instant response. No Mac process or additional hosting account
+is needed, and no credentials are included in the button URL.
+
+This is a link button, not a Telegram callback: GitHub Actions cannot receive
+Telegram webhooks itself. A one-tap Telegram callback would need a separately
+hosted listener. The morning/evening schedule still alerts only below 71,000 ₸.
+The CLI equivalent is `python -m app.check --store goldapple --notify-current`;
+adding `--dry-run` suppresses all notifications.
+
 ## Local setup
 
 Python 3.12+:
