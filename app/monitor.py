@@ -53,7 +53,11 @@ class Monitor:
             if not dry_run:
                 self.settings.require_notifications()
             results, errors = [], {}
-            for store, reader in (("Gold Apple", read_quote), ("Mon Amie", read_monamie_quote)):
+            readers = (("goldapple", "Gold Apple", read_quote),
+                       ("monamie", "Mon Amie", read_monamie_quote))
+            for key, store, reader in readers:
+                if self.settings.check_store not in ("all", key):
+                    continue
                 try:
                     for attempt in range(2):
                         try:

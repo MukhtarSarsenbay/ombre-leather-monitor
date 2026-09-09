@@ -98,6 +98,24 @@ def test_dry_run_never_sends(monkeypatch):
     send.assert_not_awaited()
 
 
+@pytest.mark.parametrize("selected,expected", [("goldapple", "Gold Apple"), ("monamie", "Mon Amie")])
+def test_split_schedule_checks_and_alerts_only_selected_store(monkeypatch, selected, expected):
+    gold = AsyncMock(return_value=quote(69000))
+    monamie = AsyncMock(return_value=quote(68000, "Mon Amie"))
+    send = AsyncMock()
+    monkeypatch.setattr("app.monitor.read_quote", gold)
+    monkeypatch.setattr("app.monitor.read_monamie_quote", monamie)
+    monkeypatch.setattr("app.monitor.send_notification", send)
+    result = asyncio.run(Monitor(settings(check_store=selected, telegram_bot_token="test",
+                                         telegram_chat_id="123")).check())
+    assert result.ok and len(result.results) == 1
+    assert result.results[0].quote.store == expected
+    assert result.results[0].notified
+    assert gold.await_count == int(selected == "goldapple")
+    assert monamie.await_count == int(selected == "monamie")
+    send.assert_awaited_once()
+
+
 def test_store_failure_does_not_prevent_other_store_alert(monkeypatch):
     monkeypatch.setattr("app.monitor.read_quote", AsyncMock(side_effect=PriceReadError("blocked")))
     monkeypatch.setattr("app.monitor.read_monamie_quote", AsyncMock(return_value=quote(69000, "Mon Amie")))

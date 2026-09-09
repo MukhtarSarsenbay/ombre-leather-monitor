@@ -19,6 +19,8 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   old **93,500 ₸** base price. Browser checks succeeded locally but failed from
   GitHub's networks. **Cloud deployment limitation:** both the browser and API
   paths were blocked in tests on GitHub's Linux, macOS and Windows runners.
+  An official free WARP proxy also failed with both the API and a headed browser.
+  The local API was verified again on 2026-09-09 at **74,800 ₸ for 50 ml**.
   Mon Amie is not currently a working cloud monitor; its failures remain visible
   in reports and do not prevent Gold Apple price alerts.
 - Source and workflow are deployed to the public repository
@@ -69,6 +71,10 @@ Read live prices without sending anything:
 ```sh
 python -m app.check --dry-run
 ```
+
+Use `--store monamie` or `--store goldapple` to check just one store. Without
+this option, `CHECK_STORE` is used (default `all`). The FastAPI instance also
+uses `CHECK_STORE`; a successful report covers only the configured stores.
 
 The report contains successful results and per-store errors. A partially failed
 check exits with code 1 while preserving the successful store's result.
@@ -124,6 +130,33 @@ schedules are disabled after 60 days without repository activity. A separate
 scheduled job commits `.github/monitor-heartbeat` once per month to maintain
 activity; only that job has repository write permission. This is a price watch,
 not an exact-time guarantee. [Scheduling documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+### Free fallback: Mon Amie on your Mac, Gold Apple on GitHub
+
+This is a prepared option, **not an installed local schedule**. It uses the Mac's
+network, where Mon Amie's public API has worked. It cannot guarantee future access.
+
+Generate and review the local configuration:
+
+```sh
+python scripts/prepare_macos_schedule.py
+plutil -lint data/kz.ombre-leather.monamie.plist
+python -m app.check --store monamie --dry-run
+```
+
+The generated plist contains no credentials. It runs this project's virtualenv,
+reads the existing `.env`, checks only Mon Amie, and writes logs under `data/`.
+It schedules 09:00 and 19:00 in the **Mac's system timezone**, which must be set
+to Asia/Almaty. Keep the project at the same path and Chrome installed for the
+browser fallback. The user must be logged in and the Mac online; sleep can delay
+checks. This is a macOS user LaunchAgent, as described in
+[Apple's launchd documentation](https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html).
+
+If this option is chosen, install the reviewed plist in `~/Library/LaunchAgents/`
+and load it with `launchctl bootstrap` for the logged-in user's GUI domain.
+After a successful local scheduled check, set the GitHub repository Actions
+variable `CHECK_STORE=goldapple` to prevent duplicate Mon Amie checks and cloud
+block notices. Until then the deployed GitHub workflow still attempts both stores.
 
 ### Railway: if you want FastAPI online
 

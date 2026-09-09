@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
+      CHECK_STORE: ${{ vars.CHECK_STORE || 'all' }}
       NOTIFICATIONS_ENABLED: ${{ vars.NOTIFICATIONS_ENABLED || 'false' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
