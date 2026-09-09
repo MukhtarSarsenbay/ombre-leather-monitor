@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     monamie_url: str = "https://www.monamie.kz/catalog/dlya_muzhchin/muzhskie_aromaty/tom_ford_ombr_leather_parfyumirovannaya_voda_id74160/"
     expected_volume_ml: int = Field(default=50, gt=0)
     threshold_kzt: int = Field(default=71000, gt=0)
-    check_store: Literal["all", "goldapple", "monamie"] = "all"
+    check_store: Literal["all", "goldapple", "monamie"] = "goldapple"
     notification_channel: Literal["telegram", "email"] = "telegram"
     telegram_bot_token: SecretStr = SecretStr("")
     telegram_chat_id: str = ""

@@ -14,6 +14,7 @@ from app.scraper import PriceReadError, Quote, parse_card_price, parse_monamie_o
 
 
 def settings(**kwargs):
+    kwargs.setdefault("check_store", "all")
     return Settings(_env_file=None, **kwargs)
 
 

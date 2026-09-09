@@ -13,7 +13,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Read live price without sending anything")
     parser.add_argument("--store", choices=("all", "goldapple", "monamie"),
-                        help="Check a single store, or both (default: CHECK_STORE/all)")
+                        help="Check a single store, or both (default: CHECK_STORE/goldapple)")
     args = parser.parse_args()
     try:
         settings = Settings()

@@ -1,8 +1,12 @@
 # Ombré Leather price monitor
 
 FastAPI plus a scheduled command to check Tom Ford Ombré Leather **50 ml** at
-Gold Apple and Mon Amie. Notify via Telegram (default) or email when a verified
+**Gold Apple only**. Notify via Telegram (default) or email when a verified
 price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert.
+
+Mon Amie monitoring was turned off at the user's request on 2026-09-09. Its
+optional reader remains in the code, but the deployed workflow explicitly checks
+only Gold Apple. No Mac scheduler was installed.
 
 ## Current verification status
 
@@ -21,8 +25,8 @@ price is **strictly below 71,000 KZT**. Exactly 71,000 does not trigger an alert
   paths were blocked in tests on GitHub's Linux, macOS and Windows runners.
   An official free WARP proxy also failed with both the API and a headed browser.
   The local API was verified again on 2026-09-09 at **74,800 ₸ for 50 ml**.
-  Mon Amie is not currently a working cloud monitor; its failures remain visible
-  in reports and do not prevent Gold Apple price alerts.
+  Mon Amie is not currently a working cloud monitor and is excluded from the
+  active schedule, so it does not produce failed-check notices.
 - Source and workflow are deployed to the public repository
   [MukhtarSarsenbay/ombre-leather-monitor](https://github.com/MukhtarSarsenbay/ombre-leather-monitor).
   Notification delivery is gated by the `NOTIFICATIONS_ENABLED` repository variable;
@@ -73,7 +77,7 @@ python -m app.check --dry-run
 ```
 
 Use `--store monamie` or `--store goldapple` to check just one store. Without
-this option, `CHECK_STORE` is used (default `all`). The FastAPI instance also
+this option, `CHECK_STORE` is used (default `goldapple`). The FastAPI instance also
 uses `CHECK_STORE`; a successful report covers only the configured stores.
 
 The report contains successful results and per-store errors. A partially failed
@@ -112,7 +116,7 @@ Your laptop can be off. There is no always-online FastAPI URL in this option.
 3. For email instead, set repository variable `NOTIFICATION_CHANNEL=email` and
    the SMTP/email repository secrets referenced in the workflow.
 4. Open **Actions → Check perfume prices → Run workflow**, leave `dry_run` checked,
-   and confirm both stores succeed from GitHub's network before relying on alerts.
+   and confirm Gold Apple succeeds from GitHub's network before relying on alerts.
 5. Set repository variable `NOTIFICATIONS_ENABLED=true` once the secrets are ready,
    then run again with `dry_run` unchecked to test the enabled notification path.
    Select `test_notification` to send a clearly labelled delivery test from GitHub.
@@ -154,9 +158,8 @@ checks. This is a macOS user LaunchAgent, as described in
 
 If this option is chosen, install the reviewed plist in `~/Library/LaunchAgents/`
 and load it with `launchctl bootstrap` for the logged-in user's GUI domain.
-After a successful local scheduled check, set the GitHub repository Actions
-variable `CHECK_STORE=goldapple` to prevent duplicate Mon Amie checks and cloud
-block notices. Until then the deployed GitHub workflow still attempts both stores.
+The deployed GitHub workflow already checks only Gold Apple. This local option
+was declined and has not been activated.
 
 ### Railway: if you want FastAPI online
 

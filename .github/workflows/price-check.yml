@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
-      CHECK_STORE: ${{ vars.CHECK_STORE || 'all' }}
+      CHECK_STORE: goldapple
       NOTIFICATIONS_ENABLED: ${{ vars.NOTIFICATIONS_ENABLED || 'false' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -54,7 +54,7 @@ jobs:
           from app.config import Settings
           from app.notify import send_notification
           asyncio.run(send_notification(Settings(),
-              "Тест доставки из GitHub Actions: уведомления Ombré Leather работают.\n"
+              "Тест доставки из GitHub Actions: уведомления Gold Apple / Ombré Leather работают.\n"
               "Проверки: 09:00 и 19:00 (Алматы). Порог: строго ниже 71 000 ₸, 50 мл.\n"
               "Это тест связи, а не сообщение о снижении цены."))
           PY
